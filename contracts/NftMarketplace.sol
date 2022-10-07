@@ -32,11 +32,7 @@ contract NftMarketplace is ReentrancyGuard {
         uint256 price
     );
 
-    event ItemCanceled(
-        address indexed seller,
-        address indexed nftAddress,
-        uint256 indexed tokenId
-    );
+    event ItemCanceled(address indexed seller, address indexed nftAddress, uint256 indexed tokenId);
 
     // NFT contract address -> NFT TokenID -> Listing
     mapping(address => mapping(uint256 => Listing)) private s_listings;
@@ -119,11 +115,11 @@ contract NftMarketplace is ReentrancyGuard {
     }
 
     function cancleListing(address nftAddress, uint256 tokenId)
-    external 
-    isOwner(nftAddress, tokenId, msg.sender) 
-    isListed(nftAddress, tokenId)
+        external
+        isOwner(nftAddress, tokenId, msg.sender)
+        isListed(nftAddress, tokenId)
     {
-        delete(s_listings[nftAddress][tokenId]);
+        delete (s_listings[nftAddress][tokenId]);
         emit ItemCanceled(msg.sender, nftAddress, tokenId);
     }
 
@@ -138,14 +134,28 @@ contract NftMarketplace is ReentrancyGuard {
 
     function withdrawProceeds() external {
         uint256 proceeds = s_proceeds[msg.sender];
-        if (proceeds <= 0){
+        if (proceeds <= 0) {
             revert NftMarketplace__NoProceeds();
         }
         s_proceeds[msg.sender] = 0;
         (bool success, ) = payable(msg.sender).call{value: proceeds}("");
-        if(!success){
+        if (!success) {
             revert NftMarketplace__TransferFailed();
         }
+    }
+
+    // Getter Functions
+
+    function getListing(address nftAddress, uint256 tokenId)
+        external
+        view
+        returns (Listing memory)
+    {
+        return s_listings[nftAddress][tokenId];
+    }
+
+    function getProceeds(address seller) external view returns (uint256) {
+        return s_proceeds[seller];
     }
 }
 
