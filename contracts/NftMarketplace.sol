@@ -2,6 +2,7 @@
 pragma solidity ^0.8.7;
 
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 error NftMarketplace__PriceMustBeAboveZero();
 error NftMarketplace__NotApprovedForMarketplace();
@@ -10,7 +11,7 @@ error NftMarketplace__NotOwner();
 error NftMarketplace__NotlIsted(address nftAddress, uint256 tokenId);
 error NftMarketplace__PriceNotMet(address nftAddress, uint256 tokenId, uint256 price);
 
-contract NftMarketplace {
+contract NftMarketplace is ReentrancyGuard {
     struct Listing {
         uint256 price;
         address seller;
@@ -29,6 +30,12 @@ contract NftMarketplace {
         uint256 price
     );
 
+    event ItemCanceled(
+        address indexed seller,
+        address indexed nftAddress,
+        uint256 indexed tokenId
+    );
+
     // NFT contract address -> NFT TokenID -> Listing
     mapping(address => mapping(uint256 => Listing)) private s_listings;
     // Seller address -> Amount Earned
@@ -37,10 +44,8 @@ contract NftMarketplace {
     modifier notListed(
         address nftAddress,
         uint256 tokenId,
-        address owner
-    ) // Challeng: Have this contract accept payment in a subset of tokens
-    // Hint: use ChainLink price feeds to convert the price of the tokens between eachother
-    {
+        address owner // Challeng: Have this contract accept payment in a subset of tokens // Hint: use ChainLink price feeds to convert the price of the tokens between eachother
+    ) {
         Listing memory listing = s_listings[nftAddress][tokenId];
         if (listing.price > 0) {
             revert NftMarketplace__AlreadyListed(nftAddress, tokenId);
@@ -93,11 +98,14 @@ contract NftMarketplace {
         emit ItemListed(msg.sender, nftAddress, tokenId, price);
     }
 
-    function buyItem(address nftAddress, uint256 tokenId) external payable 
-    isListed(nftAddress, tokenId)
+    function buyItem(address nftAddress, uint256 tokenId)
+        external
+        payable
+        nonReentrant
+        isListed(nftAddress, tokenId)
     {
         Listing memory listedItem = s_listings[nftAddress][tokenId];
-        if(msg.value < listedItem.price) {
+        if (msg.value < listedItem.price) {
             revert NftMarketplace__PriceNotMet(nftAddress, tokenId, listedItem.price);
         }
         // We dont just send the seller the money
@@ -106,6 +114,15 @@ contract NftMarketplace {
         delete (s_listings[nftAddress][tokenId]);
         IERC721(nftAddress).safeTransferFrom(listedItem.seller, msg.sender, tokenId);
         emit ItemBought(msg.sender, nftAddress, tokenId, listedItem.price);
+    }
+
+    function cancleListing(address nftAddress, uint256 tokenId)
+    external 
+    isOwner(nftAddress, tokenId, msg.sender) 
+    isListed(nftAddress, tokenId)
+    {
+        delete(s_listings[nftAddress][tokenId]);
+        emit ItemCanceled(msg.sender, nftAddress, tokenId);
     }
 }
 
