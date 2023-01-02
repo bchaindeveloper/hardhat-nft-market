@@ -2,19 +2,11 @@
 
 ![Screenshot](Screenshot.png)
 
+
+FreeCodeCamp tutorial
 *[⌨️ (20:28:51) Lesson 14: Hardhat NFTs ](https://www.youtube.com/watch?v=gyMwXuJrbJQ&t=73731s)*
 
 *This repo has been updated to work with Goerli over Rinkeby.*
-
-<br/>
-<p align="center">
-<img src="./images/randomNft/pug.png" width="225" alt="NFT Pug">
-<img src="./images/dynamicNft/happy.svg" width="225" alt="NFT Happy">
-<img src="./images/randomNft/shiba-inu.png" width="225" alt="NFT Shiba">
-<img src="./images/dynamicNft/frown.svg" width="225" alt="NFT Frown">
-<img src="./images/randomNft/st-bernard.png" width="225" alt="NFT St.Bernard">
-</p>
-<br/>
 
 We go through creating 3 different kinds of NFTs.
 
